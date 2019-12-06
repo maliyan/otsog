@@ -36,11 +36,11 @@ const BufferSize = 4000 * 4000
 
 func main() {
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 1, ' ', tabwriter.AlignRight)
-	defer w.Flush()
+	defer func(w *tabwriter.Writer) { _ = w.Flush() }(w) // refactor
 
 	cpuFile, err := os.Create("cpu.prof")
 	handle(err)
-	defer cpuFile.Close()
+	defer func(cpuFile *os.File) { _ = cpuFile.Close() }(cpuFile) // refactor
 	defer pprof.StopCPUProfile()
 
 	if err := pprof.StartCPUProfile(cpuFile); err != nil {
@@ -62,11 +62,11 @@ func main() {
 
 		for i, filename := range filenames {
 			counts[i] = countFile(filename)
-			fmt.Fprintln(w, fmt.Sprintf("%s\t%s", counts[i], filename))
+			_, _ = fmt.Fprintln(w, fmt.Sprintf("%s\t%s", counts[i], filename))
 		}
 
 		if len(filenames) > 1 {
-			fmt.Fprintln(w, fmt.Sprintf("%s\ttotal", reduce(counts)))
+			_, _ = fmt.Fprintln(w, fmt.Sprintf("%s\ttotal", reduce(counts)))
 		}
 	}
 }
@@ -74,7 +74,7 @@ func main() {
 func countFile(filename string) Chunk {
 	f, err := os.Open(filename)
 	handle(err)
-	defer f.Close()
+	defer func(f *os.File) { _ = f.Close() }(f) // refactor
 	chunks := fileOffsets(f)
 
 	if len(chunks) == 1 {
@@ -288,4 +288,3 @@ func validateFiles(filelist []string) {
 		}
 	}
 }
-
